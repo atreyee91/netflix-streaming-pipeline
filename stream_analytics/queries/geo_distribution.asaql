@@ -1,0 +1,25 @@
+-- ============================================================================
+-- Geographic Distribution of Viewers
+-- Tumbling window: 30 seconds
+-- Shows viewer counts per country and city
+-- ============================================================================
+
+SELECT
+    location.country                AS country,
+    location.region                 AS region,
+    location.city                   AS city,
+    COUNT(DISTINCT user_id)         AS active_viewers,
+    COUNT(*)                        AS total_events,
+    SUM(CASE WHEN event_type = 'video_start'    THEN 1 ELSE 0 END) AS starts,
+    SUM(CASE WHEN event_type = 'video_complete' THEN 1 ELSE 0 END) AS completions,
+    SUM(CASE WHEN event_type = 'buffer_event'   THEN 1 ELSE 0 END) AS buffer_events,
+    AVG(CASE WHEN event_type = 'buffer_event'
+             THEN buffer_duration_ms ELSE NULL END) AS avg_buffer_ms,
+    System.Timestamp()              AS window_end
+INTO [cosmos-geo-distribution]
+FROM [eventhub-input] TIMESTAMP BY timestamp
+GROUP BY
+    location.country,
+    location.region,
+    location.city,
+    TumblingWindow(second, 30)

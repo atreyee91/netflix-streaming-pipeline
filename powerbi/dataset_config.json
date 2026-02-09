@@ -1,0 +1,102 @@
+{
+  "name": "Netflix Streaming Analytics",
+  "description": "Real-time streaming analytics dataset for Netflix viewing data",
+  "defaultMode": "Streaming",
+  "tables": [
+    {
+      "name": "ViewerCount",
+      "description": "Real-time active viewer count by content",
+      "columns": [
+        {"name": "content_id",      "dataType": "String"},
+        {"name": "content_title",   "dataType": "String"},
+        {"name": "content_type",    "dataType": "String"},
+        {"name": "active_viewers",  "dataType": "Int64"},
+        {"name": "total_events",    "dataType": "Int64"},
+        {"name": "window_end",      "dataType": "DateTime"}
+      ]
+    },
+    {
+      "name": "WatchTime",
+      "description": "Average watch time per session by content",
+      "columns": [
+        {"name": "content_id",        "dataType": "String"},
+        {"name": "content_title",     "dataType": "String"},
+        {"name": "content_type",      "dataType": "String"},
+        {"name": "avg_watch_seconds", "dataType": "Double"},
+        {"name": "session_count",     "dataType": "Int64"},
+        {"name": "window_end",        "dataType": "DateTime"}
+      ]
+    },
+    {
+      "name": "TrendingContent",
+      "description": "Top trending content based on recent activity",
+      "columns": [
+        {"name": "content_id",     "dataType": "String"},
+        {"name": "content_title",  "dataType": "String"},
+        {"name": "content_type",   "dataType": "String"},
+        {"name": "event_count",    "dataType": "Int64"},
+        {"name": "unique_viewers", "dataType": "Int64"},
+        {"name": "trending_score", "dataType": "Double"},
+        {"name": "window_end",     "dataType": "DateTime"}
+      ]
+    },
+    {
+      "name": "GeoDistribution",
+      "description": "Geographic distribution of viewers",
+      "columns": [
+        {"name": "country",        "dataType": "String"},
+        {"name": "region",         "dataType": "String"},
+        {"name": "city",           "dataType": "String"},
+        {"name": "active_viewers", "dataType": "Int64"},
+        {"name": "total_events",   "dataType": "Int64"},
+        {"name": "window_end",     "dataType": "DateTime"}
+      ]
+    },
+    {
+      "name": "DeviceDistribution",
+      "description": "Viewer distribution by device type",
+      "columns": [
+        {"name": "device_type",      "dataType": "String"},
+        {"name": "unique_users",     "dataType": "Int64"},
+        {"name": "event_count",      "dataType": "Int64"},
+        {"name": "avg_bitrate_kbps", "dataType": "Double"},
+        {"name": "window_end",       "dataType": "DateTime"}
+      ]
+    },
+    {
+      "name": "BufferMetrics",
+      "description": "Buffering event metrics for quality monitoring",
+      "columns": [
+        {"name": "content_id",      "dataType": "String"},
+        {"name": "content_title",   "dataType": "String"},
+        {"name": "device_type",     "dataType": "String"},
+        {"name": "buffer_count",    "dataType": "Int64"},
+        {"name": "avg_buffer_ms",   "dataType": "Double"},
+        {"name": "max_buffer_ms",   "dataType": "Double"},
+        {"name": "affected_users",  "dataType": "Int64"},
+        {"name": "window_end",      "dataType": "DateTime"}
+      ]
+    },
+    {
+      "name": "EngagementScores",
+      "description": "User engagement scoring and segmentation",
+      "columns": [
+        {"name": "user_id",             "dataType": "String"},
+        {"name": "subscription_tier",   "dataType": "String"},
+        {"name": "device_type",         "dataType": "String"},
+        {"name": "country",             "dataType": "String"},
+        {"name": "engagement_score",    "dataType": "Double"},
+        {"name": "engagement_segment",  "dataType": "String"},
+        {"name": "total_watch_seconds", "dataType": "Double"},
+        {"name": "window_end",          "dataType": "DateTime"}
+      ]
+    }
+  ],
+  "relationships": [],
+  "streamingDatasets": {
+    "pushUrl": "<generated-after-dataset-creation>",
+    "retentionPolicy": "basicFIFO",
+    "historicDataEnabled": true,
+    "notes": "After creating the dataset via Power BI REST API, use the returned push URL to send real-time data rows."
+  }
+}

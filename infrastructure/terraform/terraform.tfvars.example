@@ -1,0 +1,30 @@
+# Copy to terraform.tfvars and fill in values before running terraform apply
+
+resource_group_name = "rg-netflix-streaming"
+location            = "eastus2"
+environment         = "dev"
+project_name        = "nflxstream"
+
+# Event Hubs
+eventhub_sku               = "Standard"
+eventhub_capacity          = 2
+eventhub_partition_count   = 4
+eventhub_message_retention = 7
+
+# Cosmos DB
+cosmosdb_consistency_level = "Session"
+cosmosdb_throughput        = 400
+
+# Data Lake Storage
+datalake_replication = "LRS"
+datalake_tier        = "Standard"
+
+# Stream Analytics
+stream_analytics_su = 3
+
+# Tags
+tags = {
+  project    = "netflix-streaming-pipeline"
+  managed_by = "terraform"
+  owner      = "data-engineering"
+}

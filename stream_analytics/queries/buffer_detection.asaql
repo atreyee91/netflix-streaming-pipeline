@@ -1,0 +1,54 @@
+-- ============================================================================
+-- Buffer Event Detection & Quality Metrics
+-- Tumbling window: 1 minute
+-- Detects quality degradation patterns and excessive buffering
+-- ============================================================================
+
+-- Per-content buffer analysis
+SELECT
+    content_id,
+    content_title,
+    location.country                    AS country,
+    device_type,
+    quality_settings.resolution         AS resolution,
+    COUNT(*)                            AS buffer_count,
+    AVG(buffer_duration_ms)             AS avg_buffer_ms,
+    MAX(buffer_duration_ms)             AS max_buffer_ms,
+    SUM(buffer_duration_ms)             AS total_buffer_ms,
+    COUNT(DISTINCT user_id)             AS affected_users,
+    System.Timestamp()                  AS window_end
+INTO [cosmos-buffer-metrics]
+FROM [eventhub-input] TIMESTAMP BY timestamp
+WHERE event_type = 'buffer_event'
+GROUP BY
+    content_id,
+    content_title,
+    location.country,
+    device_type,
+    quality_settings.resolution,
+    TumblingWindow(minute, 1)
+HAVING COUNT(*) >= 3   -- alert threshold: 3+ buffer events per window
+
+-- Quality anomaly detection: sessions with > 5s cumulative buffering
+SELECT
+    user_id,
+    session_id,
+    content_id,
+    content_title,
+    device_type,
+    location.country                    AS country,
+    SUM(buffer_duration_ms)             AS total_buffer_ms,
+    COUNT(*)                            AS buffer_count,
+    System.Timestamp()                  AS window_end
+INTO [cosmos-quality-alerts]
+FROM [eventhub-input] TIMESTAMP BY timestamp
+WHERE event_type = 'buffer_event'
+GROUP BY
+    user_id,
+    session_id,
+    content_id,
+    content_title,
+    device_type,
+    location.country,
+    TumblingWindow(minute, 2)
+HAVING SUM(buffer_duration_ms) > 5000

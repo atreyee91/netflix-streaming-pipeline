@@ -1,0 +1,70 @@
+-- ============================================================================
+-- User Engagement Scoring
+-- Sliding window: 10 minutes
+-- Calculates a per-user engagement score based on viewing behaviour
+-- ============================================================================
+
+-- Engagement score formula:
+--   +10 per video_start
+--   +5  per video_pause (indicates active watching)
+--   +25 per video_complete (high-value action)
+--   -5  per buffer_event (negative experience)
+--   +bonus based on watch duration relative to content length
+
+WITH UserActivity AS (
+    SELECT
+        user_id,
+        profile_id,
+        subscription_tier,
+        device_type,
+        location.country AS country,
+        SUM(CASE WHEN event_type = 'video_start'    THEN 10  ELSE 0 END) AS start_score,
+        SUM(CASE WHEN event_type = 'video_pause'    THEN 5   ELSE 0 END) AS pause_score,
+        SUM(CASE WHEN event_type = 'video_complete' THEN 25  ELSE 0 END) AS complete_score,
+        SUM(CASE WHEN event_type = 'video_stop'     THEN 2   ELSE 0 END) AS stop_score,
+        SUM(CASE WHEN event_type = 'buffer_event'   THEN -5  ELSE 0 END) AS buffer_penalty,
+        COUNT(DISTINCT content_id)  AS unique_titles,
+        COUNT(*)                    AS total_events,
+        SUM(duration_seconds)       AS total_watch_seconds,
+        System.Timestamp()          AS window_end
+    FROM [eventhub-input] TIMESTAMP BY timestamp
+    GROUP BY
+        user_id,
+        profile_id,
+        subscription_tier,
+        device_type,
+        location.country,
+        SlidingWindow(minute, 10)
+)
+
+SELECT
+    user_id,
+    profile_id,
+    subscription_tier,
+    device_type,
+    country,
+    unique_titles,
+    total_events,
+    total_watch_seconds,
+    -- Composite engagement score
+    (start_score + pause_score + complete_score + stop_score + buffer_penalty
+     + CASE
+         WHEN total_watch_seconds > 3600 THEN 20   -- binge bonus
+         WHEN total_watch_seconds > 1800 THEN 10
+         ELSE 0
+       END
+     + unique_titles * 3                            -- variety bonus
+    ) AS engagement_score,
+    -- Segment classification
+    CASE
+        WHEN (start_score + pause_score + complete_score + stop_score + buffer_penalty) >= 80
+            THEN 'power_viewer'
+        WHEN (start_score + pause_score + complete_score + stop_score + buffer_penalty) >= 40
+            THEN 'active_viewer'
+        WHEN (start_score + pause_score + complete_score + stop_score + buffer_penalty) >= 15
+            THEN 'casual_viewer'
+        ELSE 'low_engagement'
+    END AS engagement_segment,
+    window_end
+INTO [cosmos-engagement]
+FROM UserActivity

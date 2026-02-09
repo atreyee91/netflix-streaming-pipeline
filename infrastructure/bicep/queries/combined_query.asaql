@@ -1,0 +1,77 @@
+-- ============================================================================
+-- Combined Stream Analytics Query – Netflix Streaming Pipeline
+-- All transformations in a single job for Bicep deployment
+-- ============================================================================
+
+-- 1. Real-time viewer count (10s tumbling)
+SELECT
+    content_id, content_title, content_type,
+    COUNT(DISTINCT user_id) AS active_viewers,
+    COUNT(*)                AS total_events,
+    System.Timestamp()      AS window_end
+INTO [cosmos-viewer-count]
+FROM [eventhub-input] TIMESTAMP BY timestamp
+WHERE event_type = 'video_start'
+GROUP BY content_id, content_title, content_type, TumblingWindow(second, 10)
+
+-- 2. Average watch time (5min sliding)
+SELECT
+    content_id, content_title, content_type,
+    AVG(duration_seconds) AS avg_watch_seconds,
+    COUNT(*)              AS session_count,
+    System.Timestamp()    AS window_end
+INTO [cosmos-watch-time]
+FROM [eventhub-input] TIMESTAMP BY timestamp
+WHERE event_type IN ('video_stop', 'video_complete') AND duration_seconds > 0
+GROUP BY content_id, content_title, content_type, SlidingWindow(minute, 5)
+
+-- 3. Trending content (5min hop 1min)
+SELECT
+    content_id, content_title, content_type,
+    COUNT(*)                AS event_count,
+    COUNT(DISTINCT user_id) AS unique_viewers,
+    System.Timestamp()      AS window_end
+INTO [cosmos-trending]
+FROM [eventhub-input] TIMESTAMP BY timestamp
+WHERE event_type = 'video_start'
+GROUP BY content_id, content_title, content_type, HoppingWindow(minute, 5, 1)
+
+-- 4. Geographic distribution (30s tumbling)
+SELECT
+    location.country AS country, location.region AS region, location.city AS city,
+    COUNT(DISTINCT user_id) AS active_viewers,
+    COUNT(*)                AS total_events,
+    System.Timestamp()      AS window_end
+INTO [cosmos-geo-distribution]
+FROM [eventhub-input] TIMESTAMP BY timestamp
+GROUP BY location.country, location.region, location.city, TumblingWindow(second, 30)
+
+-- 5. Device distribution (1min tumbling)
+SELECT
+    device_type,
+    COUNT(DISTINCT user_id)            AS unique_users,
+    COUNT(*)                           AS event_count,
+    AVG(quality_settings.bitrate_kbps) AS avg_bitrate_kbps,
+    System.Timestamp()                 AS window_end
+INTO [cosmos-device-distribution]
+FROM [eventhub-input] TIMESTAMP BY timestamp
+GROUP BY device_type, TumblingWindow(minute, 1)
+
+-- 6. Buffer detection (1min tumbling, threshold >=3)
+SELECT
+    content_id, content_title, device_type,
+    COUNT(*)               AS buffer_count,
+    AVG(buffer_duration_ms) AS avg_buffer_ms,
+    MAX(buffer_duration_ms) AS max_buffer_ms,
+    COUNT(DISTINCT user_id) AS affected_users,
+    System.Timestamp()      AS window_end
+INTO [cosmos-buffer-metrics]
+FROM [eventhub-input] TIMESTAMP BY timestamp
+WHERE event_type = 'buffer_event'
+GROUP BY content_id, content_title, device_type, TumblingWindow(minute, 1)
+HAVING COUNT(*) >= 3
+
+-- 7. Archive raw events to Data Lake
+SELECT *
+INTO [datalake-raw]
+FROM [eventhub-input]

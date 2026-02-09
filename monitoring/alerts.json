@@ -1,0 +1,145 @@
+{
+  "alertRules": [
+    {
+      "name": "alert-eventhub-throttled-requests",
+      "description": "Triggers when Event Hub requests are being throttled",
+      "severity": 2,
+      "targetResource": "evhns-nflxstream-{env}",
+      "condition": {
+        "metricName": "ThrottledRequests",
+        "operator": "GreaterThan",
+        "threshold": 10,
+        "timeAggregation": "Total",
+        "windowSize": "PT5M",
+        "evaluationFrequency": "PT1M"
+      },
+      "actionGroup": "ag-pipeline-ops"
+    },
+    {
+      "name": "alert-eventhub-incoming-backlog",
+      "description": "Triggers when incoming messages backlog exceeds threshold",
+      "severity": 2,
+      "targetResource": "evhns-nflxstream-{env}",
+      "condition": {
+        "metricName": "IncomingMessages",
+        "operator": "GreaterThan",
+        "threshold": 100000,
+        "timeAggregation": "Total",
+        "windowSize": "PT5M",
+        "evaluationFrequency": "PT1M"
+      },
+      "actionGroup": "ag-pipeline-ops"
+    },
+    {
+      "name": "alert-stream-analytics-runtime-errors",
+      "description": "Triggers on Stream Analytics runtime errors",
+      "severity": 1,
+      "targetResource": "asa-nflxstream-{env}",
+      "condition": {
+        "metricName": "Errors",
+        "operator": "GreaterThan",
+        "threshold": 0,
+        "timeAggregation": "Total",
+        "windowSize": "PT5M",
+        "evaluationFrequency": "PT1M"
+      },
+      "actionGroup": "ag-pipeline-ops"
+    },
+    {
+      "name": "alert-stream-analytics-watermark-delay",
+      "description": "Triggers when watermark delay exceeds acceptable range",
+      "severity": 2,
+      "targetResource": "asa-nflxstream-{env}",
+      "condition": {
+        "metricName": "OutputWatermarkDelaySeconds",
+        "operator": "GreaterThan",
+        "threshold": 120,
+        "timeAggregation": "Maximum",
+        "windowSize": "PT5M",
+        "evaluationFrequency": "PT1M"
+      },
+      "actionGroup": "ag-pipeline-ops"
+    },
+    {
+      "name": "alert-cosmos-high-ru-consumption",
+      "description": "Triggers when Cosmos DB RU consumption is critically high",
+      "severity": 2,
+      "targetResource": "cosmos-nflxstream-{env}",
+      "condition": {
+        "metricName": "NormalizedRUConsumption",
+        "operator": "GreaterThan",
+        "threshold": 90,
+        "timeAggregation": "Maximum",
+        "windowSize": "PT5M",
+        "evaluationFrequency": "PT1M"
+      },
+      "actionGroup": "ag-pipeline-ops"
+    },
+    {
+      "name": "alert-cosmos-throttled-requests",
+      "description": "Triggers when Cosmos DB requests are being throttled (429s)",
+      "severity": 1,
+      "targetResource": "cosmos-nflxstream-{env}",
+      "condition": {
+        "metricName": "TotalRequests",
+        "dimensionFilters": [
+          {"name": "StatusCode", "values": ["429"]}
+        ],
+        "operator": "GreaterThan",
+        "threshold": 5,
+        "timeAggregation": "Total",
+        "windowSize": "PT5M",
+        "evaluationFrequency": "PT1M"
+      },
+      "actionGroup": "ag-pipeline-ops"
+    },
+    {
+      "name": "alert-function-failures",
+      "description": "Triggers when Azure Function executions are failing",
+      "severity": 1,
+      "targetResource": "appi-nflxstream-{env}",
+      "condition": {
+        "metricName": "requests/failed",
+        "operator": "GreaterThan",
+        "threshold": 10,
+        "timeAggregation": "Count",
+        "windowSize": "PT5M",
+        "evaluationFrequency": "PT1M"
+      },
+      "actionGroup": "ag-pipeline-ops"
+    },
+    {
+      "name": "alert-datalake-availability",
+      "description": "Triggers when Data Lake availability drops below threshold",
+      "severity": 1,
+      "targetResource": "dlnflxstream{env}01",
+      "condition": {
+        "metricName": "Availability",
+        "operator": "LessThan",
+        "threshold": 99.5,
+        "timeAggregation": "Average",
+        "windowSize": "PT5M",
+        "evaluationFrequency": "PT1M"
+      },
+      "actionGroup": "ag-pipeline-ops"
+    }
+  ],
+  "actionGroups": [
+    {
+      "name": "ag-pipeline-ops",
+      "shortName": "PipeOps",
+      "emailReceivers": [
+        {
+          "name": "ops-team",
+          "emailAddress": "pipeline-ops@example.com"
+        }
+      ],
+      "webhookReceivers": [
+        {
+          "name": "pagerduty",
+          "serviceUri": "https://events.pagerduty.com/integration/<key>/enqueue"
+        }
+      ]
+    }
+  ]
+}
