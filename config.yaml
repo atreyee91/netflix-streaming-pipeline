@@ -1,0 +1,102 @@
+# ─── Netflix Streaming Pipeline – Configuration ─────────────────────────────
+
+pipeline:
+  name: netflix-streaming-pipeline
+  version: "1.0.0"
+  environment: dev   # dev | staging | prod
+
+# ── Data Generator ──────────────────────────────────────────────────────────
+generator:
+  events_per_second: 100
+  num_users: 10000
+  batch_size: 50
+  content_catalog_size: 20
+  dry_run: false
+  log_level: INFO
+
+# ── Azure Event Hubs ────────────────────────────────────────────────────────
+event_hubs:
+  namespace: evhns-nflxstream-dev
+  hub_name: netflix-events
+  consumer_groups:
+    stream_analytics: cg-stream-analytics
+    azure_functions: cg-azure-functions
+  partition_count: 4
+  message_retention_days: 7
+
+# ── Stream Analytics ────────────────────────────────────────────────────────
+stream_analytics:
+  job_name: asa-nflxstream-dev
+  streaming_units: 3
+  compatibility_level: "1.2"
+  late_arrival_seconds: 60
+  out_of_order_seconds: 10
+  windows:
+    viewer_count_seconds: 10
+    watch_time_minutes: 5
+    trending_window_minutes: 5
+    trending_hop_minutes: 1
+    geo_distribution_seconds: 30
+    device_distribution_minutes: 1
+    buffer_detection_minutes: 1
+    engagement_minutes: 10
+
+# ── Cosmos DB ───────────────────────────────────────────────────────────────
+cosmos_db:
+  account: cosmos-nflxstream-dev
+  database: netflix-streaming
+  containers:
+    processed_events:
+      name: processed-events
+      partition_key: /content_id
+      throughput: 400
+    aggregations:
+      name: aggregations
+      partition_key: /aggregation_type
+      throughput: 400
+      ttl_seconds: 86400
+  consistency_level: Session
+
+# ── Data Lake Storage Gen2 ──────────────────────────────────────────────────
+data_lake:
+  account: dlnflxstreamdev01
+  containers:
+    raw: raw
+    processed: processed
+    curated: curated
+  path_pattern: "netflix-events/{date}/{time}"
+  retention:
+    raw_days: 90
+    processed_days: 365
+
+# ── Azure Functions ─────────────────────────────────────────────────────────
+functions:
+  process_events:
+    batch_size: 256
+    prefetch_count: 512
+    checkpoint_frequency: 5
+  archive_raw:
+    batch_size: 256
+    prefetch_count: 512
+
+# ── Monitoring ──────────────────────────────────────────────────────────────
+monitoring:
+  log_analytics:
+    workspace: log-nflxstream-dev
+    retention_days: 30
+  app_insights:
+    name: appi-nflxstream-dev
+    sampling_percentage: 100
+  alerts:
+    eventhub_throttle_threshold: 10
+    cosmos_ru_threshold: 90
+    function_error_threshold: 10
+    watermark_delay_threshold_seconds: 120
+
+# ── Security ────────────────────────────────────────────────────────────────
+security:
+  key_vault: kv-nflxstream-dev
+  managed_identity: id-nflxstream-dev
+  use_managed_identity: true
+  tls_min_version: "1.2"
+  public_access: false

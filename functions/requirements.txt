@@ -1,0 +1,8 @@
+azure-functions==1.21.3
+azure-eventhub==5.11.7
+azure-cosmos==4.7.0
+azure-storage-blob==12.23.1
+azure-identity==1.17.1
+azure-keyvault-secrets==4.8.0
+opencensus-ext-azure==1.1.13
+pydantic==2.9.2

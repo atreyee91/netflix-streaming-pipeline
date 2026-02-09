@@ -1,0 +1,97 @@
+{
+  "name": "netflix-streaming-transformation",
+  "description": "Stream Analytics transformation configuration for Netflix streaming pipeline",
+  "inputs": [
+    {
+      "name": "eventhub-input",
+      "type": "Stream",
+      "source": "Microsoft.EventHub/EventHub",
+      "serialization": {
+        "type": "Json",
+        "encoding": "UTF8"
+      },
+      "properties": {
+        "consumerGroup": "cg-stream-analytics",
+        "timestampField": "timestamp"
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "name": "cosmos-viewer-count",
+      "type": "Microsoft.DocumentDB",
+      "database": "netflix-streaming",
+      "container": "aggregations",
+      "partitionKey": "aggregation_type",
+      "description": "Real-time viewer count by content"
+    },
+    {
+      "name": "cosmos-watch-time",
+      "type": "Microsoft.DocumentDB",
+      "database": "netflix-streaming",
+      "container": "aggregations",
+      "partitionKey": "aggregation_type",
+      "description": "Average watch time per session"
+    },
+    {
+      "name": "cosmos-trending",
+      "type": "Microsoft.DocumentDB",
+      "database": "netflix-streaming",
+      "container": "aggregations",
+      "partitionKey": "aggregation_type",
+      "description": "Top trending content"
+    },
+    {
+      "name": "cosmos-geo-distribution",
+      "type": "Microsoft.DocumentDB",
+      "database": "netflix-streaming",
+      "container": "aggregations",
+      "partitionKey": "aggregation_type",
+      "description": "Geographic distribution of viewers"
+    },
+    {
+      "name": "cosmos-device-distribution",
+      "type": "Microsoft.DocumentDB",
+      "database": "netflix-streaming",
+      "container": "aggregations",
+      "partitionKey": "aggregation_type",
+      "description": "Device type distribution"
+    },
+    {
+      "name": "cosmos-buffer-metrics",
+      "type": "Microsoft.DocumentDB",
+      "database": "netflix-streaming",
+      "container": "aggregations",
+      "partitionKey": "aggregation_type",
+      "description": "Buffer event metrics"
+    },
+    {
+      "name": "cosmos-engagement",
+      "type": "Microsoft.DocumentDB",
+      "database": "netflix-streaming",
+      "container": "aggregations",
+      "partitionKey": "aggregation_type",
+      "description": "User engagement scores"
+    },
+    {
+      "name": "datalake-raw",
+      "type": "Microsoft.Storage/Blob",
+      "container": "raw",
+      "pathPattern": "netflix-events/{date}/{time}",
+      "serialization": {
+        "type": "Json",
+        "format": "LineSeparated"
+      },
+      "description": "Raw event archive to Data Lake Gen2"
+    }
+  ],
+  "queries": [
+    "queries/realtime_viewer_count.asaql",
+    "queries/avg_watch_time.asaql",
+    "queries/trending_content.asaql",
+    "queries/geo_distribution.asaql",
+    "queries/device_distribution.asaql",
+    "queries/buffer_detection.asaql",
+    "queries/engagement_scoring.asaql"
+  ]
+}

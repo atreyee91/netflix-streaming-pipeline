@@ -1,0 +1,27 @@
+-- ============================================================================
+-- Average Watch Time Per Session
+-- Sliding window: 5 minutes
+-- Calculates mean, median-approx, and percentile watch durations
+-- ============================================================================
+
+SELECT
+    content_id,
+    content_title,
+    content_type,
+    AVG(duration_seconds)                 AS avg_watch_seconds,
+    MIN(duration_seconds)                 AS min_watch_seconds,
+    MAX(duration_seconds)                 AS max_watch_seconds,
+    PERCENTILE_CONT(0.5) WITHIN GROUP
+        (ORDER BY duration_seconds)
+        OVER (PARTITION BY content_id)    AS median_watch_seconds,
+    COUNT(*)                              AS session_count,
+    System.Timestamp()                    AS window_end
+INTO [cosmos-watch-time]
+FROM [eventhub-input] TIMESTAMP BY timestamp
+WHERE event_type IN ('video_stop', 'video_complete')
+  AND duration_seconds > 0
+GROUP BY
+    content_id,
+    content_title,
+    content_type,
+    SlidingWindow(minute, 5)

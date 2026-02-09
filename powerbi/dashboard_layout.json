@@ -1,0 +1,180 @@
+{
+  "dashboard": {
+    "name": "Netflix Real-Time Streaming Dashboard",
+    "refreshInterval": "5s",
+    "pages": [
+      {
+        "name": "Real-Time Overview",
+        "layout": {
+          "rows": [
+            {
+              "height": "20%",
+              "panels": [
+                {
+                  "type": "card",
+                  "title": "Active Viewers",
+                  "measure": "Total Active Viewers",
+                  "icon": "eye",
+                  "conditionalFormatting": {
+                    "positive": "> previous_window"
+                  }
+                },
+                {
+                  "type": "card",
+                  "title": "Active Titles",
+                  "measure": "Active Titles"
+                },
+                {
+                  "type": "card",
+                  "title": "Avg Watch Time",
+                  "measure": "Avg Watch Duration (min)",
+                  "format": "#,##0.0 min"
+                },
+                {
+                  "type": "card",
+                  "title": "Buffer Rate",
+                  "measure": "Buffer Rate Per 1K",
+                  "format": "#,##0.0",
+                  "conditionalFormatting": {
+                    "warning": "> 5",
+                    "critical": "> 15"
+                  }
+                },
+                {
+                  "type": "card",
+                  "title": "Completion Rate",
+                  "measure": "Completion Rate %",
+                  "format": "#,##0.0%"
+                }
+              ]
+            },
+            {
+              "height": "40%",
+              "panels": [
+                {
+                  "type": "lineChart",
+                  "title": "Viewers Over Time",
+                  "width": "50%",
+                  "xAxis": "window_end",
+                  "yAxis": "active_viewers",
+                  "series": "content_title",
+                  "table": "ViewerCount",
+                  "streaming": true
+                },
+                {
+                  "type": "barChart",
+                  "title": "Top 10 Trending Content",
+                  "width": "50%",
+                  "table": "TrendingContent",
+                  "category": "content_title",
+                  "value": "trending_score",
+                  "topN": 10,
+                  "sortOrder": "descending"
+                }
+              ]
+            },
+            {
+              "height": "40%",
+              "panels": [
+                {
+                  "type": "filledMap",
+                  "title": "Global Viewer Distribution",
+                  "width": "40%",
+                  "table": "GeoDistribution",
+                  "location": "country",
+                  "value": "active_viewers",
+                  "colorSaturation": "active_viewers"
+                },
+                {
+                  "type": "donutChart",
+                  "title": "Device Distribution",
+                  "width": "25%",
+                  "table": "DeviceDistribution",
+                  "category": "device_type",
+                  "value": "unique_users"
+                },
+                {
+                  "type": "table",
+                  "title": "Buffer Alerts",
+                  "width": "35%",
+                  "table": "BufferMetrics",
+                  "columns": [
+                    "content_title",
+                    "device_type",
+                    "buffer_count",
+                    "avg_buffer_ms",
+                    "affected_users"
+                  ],
+                  "conditionalFormatting": {
+                    "buffer_count": {"critical": "> 10", "warning": "> 5"}
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "name": "Engagement Analysis",
+        "layout": {
+          "rows": [
+            {
+              "height": "30%",
+              "panels": [
+                {
+                  "type": "pieChart",
+                  "title": "Engagement Segments",
+                  "width": "33%",
+                  "table": "EngagementScores",
+                  "category": "engagement_segment",
+                  "value": "count"
+                },
+                {
+                  "type": "barChart",
+                  "title": "Engagement by Subscription Tier",
+                  "width": "33%",
+                  "table": "EngagementScores",
+                  "category": "subscription_tier",
+                  "value": "engagement_score"
+                },
+                {
+                  "type": "gaugeChart",
+                  "title": "Avg Engagement Score",
+                  "width": "34%",
+                  "measure": "Avg Engagement Score",
+                  "min": 0,
+                  "max": 200,
+                  "target": 80
+                }
+              ]
+            },
+            {
+              "height": "70%",
+              "panels": [
+                {
+                  "type": "scatterPlot",
+                  "title": "Watch Time vs Engagement",
+                  "width": "50%",
+                  "table": "EngagementScores",
+                  "xAxis": "total_watch_seconds",
+                  "yAxis": "engagement_score",
+                  "color": "engagement_segment"
+                },
+                {
+                  "type": "matrix",
+                  "title": "Engagement by Country & Device",
+                  "width": "50%",
+                  "table": "EngagementScores",
+                  "rows": "country",
+                  "columns": "device_type",
+                  "values": "engagement_score",
+                  "aggregation": "average"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

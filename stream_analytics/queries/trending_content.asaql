@@ -1,0 +1,41 @@
+-- ============================================================================
+-- Top Trending Content (Last 5 Minutes)
+-- Hopping window: 5 min window, 1 min hop
+-- Ranks content by viewer engagement
+-- ============================================================================
+
+WITH ContentCounts AS (
+    SELECT
+        content_id,
+        content_title,
+        content_type,
+        COUNT(*)                AS event_count,
+        COUNT(DISTINCT user_id) AS unique_viewers,
+        SUM(CASE WHEN event_type = 'video_complete' THEN 1 ELSE 0 END) AS completions,
+        SUM(CASE WHEN event_type = 'video_start'    THEN 1 ELSE 0 END) AS starts,
+        AVG(duration_seconds)   AS avg_duration,
+        System.Timestamp()      AS window_end
+    FROM [eventhub-input] TIMESTAMP BY timestamp
+    GROUP BY
+        content_id,
+        content_title,
+        content_type,
+        HoppingWindow(minute, 5, 1)
+)
+
+SELECT
+    content_id,
+    content_title,
+    content_type,
+    event_count,
+    unique_viewers,
+    completions,
+    starts,
+    avg_duration,
+    -- Trending score: weighted combination of viewers and completion rate
+    (unique_viewers * 2.0) +
+        (CASE WHEN starts > 0 THEN (CAST(completions AS float) / starts) * 50 ELSE 0 END)
+        AS trending_score,
+    window_end
+INTO [cosmos-trending]
+FROM ContentCounts

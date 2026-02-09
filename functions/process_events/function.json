@@ -1,0 +1,15 @@
+{
+  "scriptFile": "__init__.py",
+  "bindings": [
+    {
+      "type": "eventHubTrigger",
+      "name": "events",
+      "direction": "in",
+      "eventHubName": "%EVENTHUB_NAME%",
+      "connection": "EVENTHUB_CONNECTION_STRING",
+      "consumerGroup": "cg-azure-functions",
+      "cardinality": "many",
+      "dataType": "binary"
+    }
+  ]
+}

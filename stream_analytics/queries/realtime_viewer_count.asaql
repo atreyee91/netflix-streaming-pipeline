@@ -1,0 +1,21 @@
+-- ============================================================================
+-- Real-Time Viewer Count by Content
+-- Tumbling window: 10 seconds
+-- Counts distinct active viewers per content item
+-- ============================================================================
+
+SELECT
+    content_id,
+    content_title,
+    content_type,
+    COUNT(DISTINCT user_id) AS active_viewers,
+    COUNT(*)                AS total_events,
+    System.Timestamp()      AS window_end
+INTO [cosmos-viewer-count]
+FROM [eventhub-input] TIMESTAMP BY timestamp
+WHERE event_type = 'video_start'
+GROUP BY
+    content_id,
+    content_title,
+    content_type,
+    TumblingWindow(second, 10)
