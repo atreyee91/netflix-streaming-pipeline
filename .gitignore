@@ -32,5 +32,8 @@ local.settings.json
 bin/
 obj/
 
+# Generated reports
+reports/
+
 # Logs
 *.log
